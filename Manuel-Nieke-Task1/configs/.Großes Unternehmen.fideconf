@@ -1,0 +1,29 @@
+# Lists all features from the model with manual (first digit) and automatic (second digit) selection
+# 0 = deselected, 1 = selected, 2 = undefined
+21File Hoster
+21Speicherart
+20In-Memory
+12Festplatte
+21Benutzerkonten
+11Zugriffsbereiche
+12Gruppen
+12Berechtigungen
+21Client-Applikation
+12GUI
+22Kommandozeile
+12Komprimierung
+22Sicherheit
+22Verschlüsselte Übertragung
+22Verschlüsselt Abspeichern
+12Logging
+21Fehlertoleranz
+11Checksummen
+12Redundanz
+12Fehlerkorregierender Code
+21Ressourcenbeschränkung
+12Speicherplatz
+22Bandbreite
+22Traffic
+21Datei-Identifikation
+22ID
+12Dateipfad
