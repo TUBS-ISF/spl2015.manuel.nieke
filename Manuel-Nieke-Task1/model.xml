@@ -1,11 +1,64 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 	<featureModel chosenLayoutAlgorithm="1">
 		<struct>
-			<and abstract="true" mandatory="true" name="ManuelNiekeTask1">
-				<feature name="Base"/>
+			<and abstract="true" mandatory="true" name="File Hoster">
+				<description>
+					Ziel des Projektes ist es, einen einfachen File Hoster zu implementieren.
+					In erster Linie wird hierfür die Server-Applikation bereitgestellt auf die entfernt zugegriffen werden kann.
+					Die Applikation bietet Grundlegend die Möglichkeiten Dateien abzuspeichern, zu löschen, zu überschreiben, abzurufen sowie eine Liste der Dateien anzuzeigen, auf die zugegriffen werden kann.
+					Mit der Server-Applikation kann entweder über die bereitgestellte API oder die optionalen Client-Applikationen interagiert werden.
+				</description>
+				<alt abstract="true" mandatory="true" name="Speicherart">
+					<description>
+						 
+					</description>
+					<feature mandatory="true" name="In-Memory"/>
+					<feature mandatory="true" name="Festplatte"/>
+				</alt>
+				<and name="Benutzerkonten">
+					<and name="Zugriffsbereiche">
+						<feature name="Gruppen"/>
+					</and>
+					<feature name="Berechtigungen"/>
+				</and>
+				<or abstract="true" name="Client-Applikation">
+					<feature mandatory="true" name="GUI"/>
+					<feature mandatory="true" name="Kommandozeile"/>
+				</or>
+				<feature name="Komprimierung"/>
+				<or abstract="true" name="Sicherheit">
+					<feature mandatory="true" name="Verschlüsselte Übertragung"/>
+					<feature mandatory="true" name="Verschlüsselt Abspeichern"/>
+				</or>
+				<feature name="Logging"/>
+				<or abstract="true" name="Fehlertoleranz">
+					<and mandatory="true" name="Checksummen">
+						<feature name="Redundanz"/>
+					</and>
+					<feature mandatory="true" name="Fehlerkorregierender Code"/>
+				</or>
+				<or abstract="true" name="Ressourcenbeschränkung">
+					<feature mandatory="true" name="Speicherplatz"/>
+					<feature mandatory="true" name="Bandbreite"/>
+					<feature mandatory="true" name="Traffic"/>
+				</or>
+				<or abstract="true" name="Datei-Identifikation">
+					<feature mandatory="true" name="ID"/>
+					<feature mandatory="true" name="Dateipfad"/>
+				</or>
 			</and>
 		</struct>
-		<constraints/>
+		<constraints>
+			<rule>
+				<imp>
+					<disj>
+						<var>Speicherplatz</var>
+						<var>Traffic</var>
+					</disj>
+					<var>Benutzerkonten</var>
+				</imp>
+			</rule>
+		</constraints>
 		<calculations Auto="true" Constraints="true" Features="true" Redundant="true" Tautology="true"/>
 		<comments/>
 		<featureOrder userDefined="false"/>
