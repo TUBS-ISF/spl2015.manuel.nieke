@@ -1,0 +1,16 @@
+Bei der Ausfuehrung muss zunaechst der "FileHosterServer" gestartet werden und danach der "TestClient".
+Server und Client koennen dabei prinzipiell auf verschiedenen Maschinen gestartet werden (Adresse im Client
+muss angepasst werden, bisher ungetestet).
+Der Client legt nach dem Start eine Datei test im Unterverzeichnis Client des Anwendungsverzeichnisses an.
+Diese wird mit ein wenig Text gefuellt und an den Server uebertragen. Falls dieser die Option ausgewaehlt hat
+die Dateien auf die Festplatte zu speichern werden diese in dessen Anwendungsverzeichnis abgelegt.
+Daraufhin ruft der Client die Datei erneut ab und legt diese im Client Verzeichnis ab unter dem Namen "returned".
+Im Erfolgsfall sollte diese mit der Datei "test" identisch sein.
+
+Parameter				Moegliche Werte
+
+-so						memory, hdd			Entscheidet ob der Server Dateien auf Festplatte oder im RAM ablegt
+-io						id, path, idpath	Entscheidet ob die Dateien ueber id, pfad oder beides angesprochen werden koennen
+
+
+Getestet: memory/id , hdd/path
