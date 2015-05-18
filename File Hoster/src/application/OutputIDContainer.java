@@ -6,10 +6,9 @@ import java.io.Serializable;
 public class OutputIDContainer extends ReturnContainer implements Serializable {
 	public Integer id;
 	
-	public OutputIDContainer(Integer id, OutputStream outputStream) {
+	public OutputIDContainer(Integer id) {
 		super();
 		this.id = id;
-		this.outputStream = outputStream;
 	}
 	
 }

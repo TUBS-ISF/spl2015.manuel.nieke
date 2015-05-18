@@ -7,10 +7,9 @@ public class OutputIDPathContainer extends ReturnContainer implements Serializab
 	public Integer id;
 	public String path;
 	
-	public OutputIDPathContainer(Integer id, String path, OutputStream outputStream) {
+	public OutputIDPathContainer(Integer id, String path) {
 		super();
 		this.id = id;
 		this.path = path;
-		this.outputStream = outputStream;
 	}
 }

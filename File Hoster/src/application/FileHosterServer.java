@@ -1,5 +1,7 @@
 package application;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -16,21 +18,27 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import transfer.RMIInputStream;
 import transfer.RMIInputStreamImpl;
 import transfer.RMIOutputStream;
 import transfer.RMIOutputStreamImpl;
 
-public class FileHosterServer extends UnicastRemoteObject {
+public class FileHosterServer extends UnicastRemoteObject implements
+		IFileHosterServer {
 
 	public FileHosterServer(int port) throws RemoteException {
 		super(port);
 	}
 
+	final public static int BUF_SIZE = 1024 * 64;
+	
 	private static int serverPort = 1099;
 	private static int registryPort = 1099;
+	private int idCounter = 0;
 
 	enum saveOptionEnum {
 		IN_MEMORY, HDD
@@ -44,7 +52,14 @@ public class FileHosterServer extends UnicastRemoteObject {
 	private static identificationOptionEnum identificationOption = null;
 
 	Registry rmiRegistry;
-	Map<String, File> fileMap = new HashMap<String, File>();
+
+	// Maps to identify files by id or path for in memory saving
+	Map<Integer, ByteArrayOutputStream> idFileMap;
+	Map<String, ByteArrayOutputStream> pathFileMap;
+
+	// Maps to identify the filepath for id or path for hdd saving
+	Map<Integer, String> idPathMap;
+	Set<String> filePathSet;
 
 	public static void main(String[] args) {
 
@@ -102,7 +117,7 @@ public class FileHosterServer extends UnicastRemoteObject {
 							.println("Invalid parameter for server port! Please specify a valid integer value.");
 					return;
 				}
-			} else if(rp) {
+			} else if (rp) {
 				try {
 					registryPort = Integer.parseInt(arg);
 				} catch (NumberFormatException e) {
@@ -110,34 +125,39 @@ public class FileHosterServer extends UnicastRemoteObject {
 							.println("Invalid parameter for registry port! Please specify a valid integer value.");
 					return;
 				}
-			} else if(so) {
-				if(arg.equals("memory")) {
+			} else if (so) {
+				if (arg.equals("memory")) {
 					saveOption = saveOptionEnum.IN_MEMORY;
-				} else if(arg.equals("hdd")) {
+				} else if (arg.equals("hdd")) {
 					saveOption = saveOptionEnum.HDD;
 				} else {
-					System.out.println("Invalid value for save option! Please select either memory or hdd.");
+					System.out
+							.println("Invalid value for save option! Please select either memory or hdd.");
 					return;
 				}
-			} else if(io) {
-				if(arg.equals("id")) {
+				so = false;
+			} else if (io) {
+				if (arg.equals("id")) {
 					identificationOption = identificationOptionEnum.ID;
-				} else if(arg.equals("path")) {
+				} else if (arg.equals("path")) {
 					identificationOption = identificationOptionEnum.PATH;
-				} else if(arg.equals("idpath")) {
+				} else if (arg.equals("idpath")) {
 					identificationOption = identificationOptionEnum.ID_PATH;
 				} else {
-					System.out.println("Invalid value for identification option! Please select either id, path or idpath.");
+					System.out
+							.println("Invalid value for identification option! Please select either id, path or idpath.");
 					return;
 				}
+				io = false;
 			} else {
 				System.out.println("Unkown parameter: " + arg);
 				printHelpText();
 				return;
 			}
 		}
-		
-		if(sp || rp || so || io || saveOption == null || identificationOption == null) {
+
+		if (sp || rp || so || io || saveOption == null
+				|| identificationOption == null) {
 			System.out.println("Invalid parameters!");
 			printHelpText();
 			return;
@@ -228,13 +248,184 @@ public class FileHosterServer extends UnicastRemoteObject {
 		System.out.println("\t--help -h This message");
 	}
 
-	private OutputStream getOutputStream(File f) throws IOException {
-		return new RMIOutputStream(new RMIOutputStreamImpl(
-				new FileOutputStream(f)));
+	public synchronized ReturnContainer createNewFile(String name)
+			throws IOException {
+		ReturnContainer container = null;
+		String path = null;
+		switch (identificationOption) {
+		case ID:
+			registerFileID(name);
+			container = new OutputIDContainer(idCounter++);
+			break;
+		case PATH:
+			path = registerFilePath(name);
+			container = new OutputPathContainer(path);
+			break;
+		case ID_PATH:
+			path = registerFileIDPath(name);
+			container = new OutputIDPathContainer(idCounter++, path);
+			break;
+		}
+
+		return container;
 	}
 
-	private InputStream getInputStream(File f) throws IOException {
+	public OutputStream getOutputStream(String name) throws IOException {
+		
+		OutputStream outputStream = null;
+		
+		if(saveOption == saveOptionEnum.HDD) {
+			File file = new File(name);
+			outputStream = new FileOutputStream(file);
+		} else {
+			outputStream = pathFileMap.get(name);
+		}
+
+		outputStream = new RMIOutputStream(
+				new RMIOutputStreamImpl(outputStream));
+
+		return outputStream;
+
+	}
+	
+	public OutputStream getOutputStream(Integer ID) throws IOException {
+		
+		OutputStream outputStream = null;
+		
+		if(saveOption == saveOptionEnum.HDD) {
+			File file = new File(idPathMap.get(ID));
+			outputStream = new FileOutputStream(file);
+		} else {
+			outputStream = idFileMap.get(ID);
+		}
+		
+		outputStream = new RMIOutputStream(
+				new RMIOutputStreamImpl(outputStream));
+
+
+		return outputStream;
+	}
+
+	public InputStream getInputStream(String path) throws IOException {
+		InputStream inputStream = null;
+		
+		if(saveOption == saveOptionEnum.HDD) {
+			File file = new File(path);
+			inputStream = new FileInputStream(file);
+		} else {
+			ByteArrayOutputStream outputStream = pathFileMap.get(path);
+			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+		}
+		
 		return new RMIInputStream(
-				new RMIInputStreamImpl(new FileInputStream(f)));
+				new RMIInputStreamImpl(inputStream));
+	}
+	
+	public InputStream getInputStream(Integer id) throws IOException {
+		 InputStream inputStream = null;
+		
+		if(saveOption == saveOptionEnum.HDD) {
+			File file = new File(idPathMap.get(id));
+			inputStream = new FileInputStream(file);
+		} else {
+			ByteArrayOutputStream outputStream = idFileMap.get(id);
+			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+			
+		}
+		
+		return new RMIInputStream(
+				new RMIInputStreamImpl(inputStream));
+	}
+
+	private void registerFileID(String name) throws IOException {
+		if (saveOption == saveOptionEnum.HDD) {
+			File file = new File(name);
+			if (idPathMap == null) {
+				idPathMap = new HashMap<Integer, String>();
+			}
+			idPathMap.put(idCounter, file.getPath());
+			if (file.exists()) {
+				file.delete();
+			}
+			file.createNewFile();
+		} else {
+			if (idFileMap == null) {
+				idFileMap = new HashMap<Integer, ByteArrayOutputStream>();
+			}
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			idFileMap.put(idCounter, outputStream);
+		}
+	}
+
+	private String registerFilePath(String name) throws IOException {
+		String path = null;
+		if (saveOption == saveOptionEnum.HDD) {
+			File file = new File(name);
+			if (filePathSet == null) {
+				filePathSet = new HashSet<String>();
+			}
+			filePathSet.add(file.getPath());
+			if (file.exists()) {
+				file.delete();
+			}
+			file.createNewFile();
+			path = file.getPath();
+		} else {
+			if (pathFileMap == null) {
+				pathFileMap = new HashMap<String, ByteArrayOutputStream>();
+			}
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			pathFileMap.put(name, outputStream);
+			path = name;
+		}
+		
+		return path;
+	}
+
+	private String registerFileIDPath(String name) throws IOException {
+		String path = null;
+		if (saveOption == saveOptionEnum.HDD) {
+			File file = new File(name);
+			if (filePathSet == null) {
+				filePathSet = new HashSet<String>();
+			}
+			if (idPathMap == null) {
+				idPathMap = new HashMap<Integer, String>();
+			}
+
+			filePathSet.add(file.getPath());
+			idPathMap.put(idCounter, file.getPath());
+
+			if (file.exists()) {
+				file.delete();
+			}
+			file.createNewFile();
+			path = file.getPath();
+		} else {
+			if (pathFileMap == null) {
+				pathFileMap = new HashMap<String, ByteArrayOutputStream>();
+			}
+			if (idFileMap == null) {
+				idFileMap = new HashMap<Integer, ByteArrayOutputStream>();
+			}
+
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			
+			idFileMap.put(idCounter, outputStream);
+			pathFileMap.put(name, outputStream);
+			path = name;
+		}
+		return path;
+	}
+	
+	public static void copy(InputStream in, OutputStream out)
+			throws IOException {
+		byte[] b = new byte[BUF_SIZE];
+		int len;
+		while ((len = in.read(b)) >= 0) {
+			out.write(b, 0, len);
+		}
+		in.close();
+		out.close();
 	}
 }
