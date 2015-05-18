@@ -5,6 +5,12 @@ import java.io.OutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+/**
+ * All files in this package are used in order to enable file transfer via Java-RMI.
+ * See http://www.censhare.com/de/insight/uebersicht/artikel/file-streaming-using-java-rmi for
+ * an explanation as to why this is necessary.
+ *
+ */
 public class RMIOutputStreamImpl implements IRMIOutputStream {
 
 	private OutputStream out;

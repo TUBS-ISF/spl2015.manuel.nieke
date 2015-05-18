@@ -11,8 +11,6 @@ import java.rmi.registry.Registry;
 
 public class TestClient {
 
-	
-
 	public static void main(String[] args) {
 		try {
 			Registry registry = LocateRegistry.getRegistry("localhost");
@@ -36,6 +34,9 @@ public class TestClient {
 			} else if (container instanceof OutputIDContainer) {
 				outputStream = server
 						.getOutputStream(((OutputIDContainer) container).id);
+			} else if (container instanceof OutputIDPathContainer) {
+				outputStream = server
+						.getOutputStream(((OutputIDPathContainer) container).id);
 			}
 
 			FileHosterServer.copy(new FileInputStream(testFile), outputStream);
@@ -49,8 +50,9 @@ public class TestClient {
 			}
 
 			File returnedFile = new File("client/returned.txt");
-			FileHosterServer.copy(inputStream, new FileOutputStream(returnedFile));
-			
+			FileHosterServer.copy(inputStream, new FileOutputStream(
+					returnedFile));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;

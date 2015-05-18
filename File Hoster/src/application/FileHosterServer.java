@@ -289,9 +289,9 @@ public class FileHosterServer extends UnicastRemoteObject implements
 	}
 	
 	public OutputStream getOutputStream(Integer ID) throws IOException {
-		
 		OutputStream outputStream = null;
 		
+		// Open output stream if file exists on hdd or use saved stream
 		if(saveOption == saveOptionEnum.HDD) {
 			File file = new File(idPathMap.get(ID));
 			outputStream = new FileOutputStream(file);
@@ -299,6 +299,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			outputStream = idFileMap.get(ID);
 		}
 		
+		// Create ouput stream for remote usage
 		outputStream = new RMIOutputStream(
 				new RMIOutputStreamImpl(outputStream));
 
@@ -309,6 +310,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 	public InputStream getInputStream(String path) throws IOException {
 		InputStream inputStream = null;
 		
+		// Open output stream if file exists on hdd or use saved stream
 		if(saveOption == saveOptionEnum.HDD) {
 			File file = new File(path);
 			inputStream = new FileInputStream(file);
@@ -317,6 +319,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 		}
 		
+		// Create ouput stream for remote usage
 		return new RMIInputStream(
 				new RMIInputStreamImpl(inputStream));
 	}
@@ -324,6 +327,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 	public InputStream getInputStream(Integer id) throws IOException {
 		 InputStream inputStream = null;
 		
+		// Open input stream if file exists on hdd or use saved stream
 		if(saveOption == saveOptionEnum.HDD) {
 			File file = new File(idPathMap.get(id));
 			inputStream = new FileInputStream(file);
@@ -333,11 +337,18 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			
 		}
 		
+		// Create input stream for remote usage
 		return new RMIInputStream(
 				new RMIInputStreamImpl(inputStream));
 	}
 
+	/**
+	 * A helper method for creating a new file and linking that file to an ID.
+	 * @param name the name of the new file. If that file already exists it is overwritten
+	 * @throws IOException if something went wrong during file creation
+	 */
 	private void registerFileID(String name) throws IOException {
+		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(name);
 			if (idPathMap == null) {
@@ -349,6 +360,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			}
 			file.createNewFile();
 		} else {
+			// For in memory saving a ByteArrayOutputStream is used instead of file
 			if (idFileMap == null) {
 				idFileMap = new HashMap<Integer, ByteArrayOutputStream>();
 			}
@@ -357,8 +369,15 @@ public class FileHosterServer extends UnicastRemoteObject implements
 		}
 	}
 
+	/**
+	 * A helper method for creating a new file and linking that file to its path.
+	 * @param name the name of the new file. If that file already exists it is overwritten
+	 * @return the "internal" path of the file which is used for retrieval
+	 * @throws IOException if something went wrong during file creation
+	 */
 	private String registerFilePath(String name) throws IOException {
 		String path = null;
+		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(name);
 			if (filePathSet == null) {
@@ -371,6 +390,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			file.createNewFile();
 			path = file.getPath();
 		} else {
+			// For in memory saving a ByteArrayOutputStream is used instead of file
 			if (pathFileMap == null) {
 				pathFileMap = new HashMap<String, ByteArrayOutputStream>();
 			}
@@ -382,8 +402,15 @@ public class FileHosterServer extends UnicastRemoteObject implements
 		return path;
 	}
 
+	/**
+	 * A helper method for creating a new file and linking that file to its path and id.
+	 * @param name the name of the new file. If that file already exists it is overwritten
+	 * @return the "internal" path of the file which is used for retrieval
+	 * @throws IOException if something went wrong during file creation
+	 */
 	private String registerFileIDPath(String name) throws IOException {
 		String path = null;
+		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(name);
 			if (filePathSet == null) {
@@ -402,6 +429,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			file.createNewFile();
 			path = file.getPath();
 		} else {
+			// If file is written on HDD only the path is remembered
 			if (pathFileMap == null) {
 				pathFileMap = new HashMap<String, ByteArrayOutputStream>();
 			}
@@ -418,6 +446,12 @@ public class FileHosterServer extends UnicastRemoteObject implements
 		return path;
 	}
 	
+	/**
+	 * A helper method to copy contents of an input stream to an output stream.
+	 * @param in the source input stream
+	 * @param out the destination output stream
+	 * @throws IOException if something went wrong during copying
+	 */
 	public static void copy(InputStream in, OutputStream out)
 			throws IOException {
 		byte[] b = new byte[BUF_SIZE];
