@@ -46,4 +46,24 @@ public interface IFileHosterServer extends Remote {
 	 * @throws IOException if something went wring during writing
 	 */
 	OutputStream getOutputStream(Integer ID) throws IOException;
+	
+	/**
+	 * Deletes the file identified by the id.
+	 * @param id the id of the file to be deleted.
+	 * @throws IOException if something went wrong during deletion.
+	 */
+	void deleteFile(Integer id) throws IOException;
+	
+	/**
+	 * Deletes the file identified by the path.
+	 * @param path the path of the file to be deleted.
+	 * @throws IOException if something went wrong during deletion.
+	 */
+	void deleteFile(String path) throws IOException;
+	
+	/**
+	 * Lists all saved files.
+	 * @return an array containing either ids, paths or id/path pairs.
+	 */
+	String[] listFiles();
 }

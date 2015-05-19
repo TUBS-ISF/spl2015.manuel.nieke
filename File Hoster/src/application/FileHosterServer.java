@@ -17,9 +17,12 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import transfer.RMIInputStream;
@@ -60,6 +63,8 @@ public class FileHosterServer extends UnicastRemoteObject implements
 	// Maps to identify the filepath for id or path for hdd saving
 	Map<Integer, String> idPathMap;
 	Set<String> filePathSet;
+	
+	Map<Integer, String> IDToPathMapping;
 
 	public static void main(String[] args) {
 
@@ -341,6 +346,95 @@ public class FileHosterServer extends UnicastRemoteObject implements
 		return new RMIInputStream(
 				new RMIInputStreamImpl(inputStream));
 	}
+	
+	public void deleteFile(Integer id) throws IOException {
+		if(saveOption == saveOptionEnum.HDD) {
+			String path = idPathMap.get(id);
+			File file = new File(path);
+			file.delete();
+		} else {
+			idFileMap.remove(id);
+		}
+		
+		if(identificationOption == identificationOptionEnum.ID_PATH) {
+			String path = IDToPathMapping.get(id);
+			IDToPathMapping.remove(id);
+			
+			if(saveOption == saveOptionEnum.HDD) {
+				filePathSet.remove(path);
+			} else {
+				pathFileMap.remove(path);
+			}
+		}
+	}
+	
+	public void deleteFile(String path) throws IOException {
+		if(saveOption == saveOptionEnum.HDD) {
+			File file = new File(path);
+			file.delete();
+		} else {
+			pathFileMap.remove(path);
+		}
+		
+		
+		if(identificationOption == identificationOptionEnum.ID_PATH) {
+			Integer key = null;
+			Set<Entry<Integer,String>> entries = IDToPathMapping.entrySet();
+			for(Entry entry : entries) {
+				if(entry.getValue().equals(path)) {
+					key = (Integer)entry.getKey();
+					IDToPathMapping.remove(key);
+					break;
+				}
+			}
+			
+			if(saveOption == saveOptionEnum.HDD) {
+				idPathMap.remove(key);
+			} else {
+				idFileMap.remove(key);
+			}
+		}
+	}
+	
+	public String[] listFiles() {
+		String[] array = null;
+		List<String> list = new ArrayList<String>();
+		switch(identificationOption) {
+		case ID:
+			if(saveOption == saveOptionEnum.HDD) {
+				for(Integer id: idPathMap.keySet()) {
+					list.add(id.toString());
+				}
+			} else {
+				for(Integer id: idFileMap.keySet()) {
+					list.add(id.toString());
+				}
+			}
+			break;
+			
+		case PATH:
+			if(saveOption == saveOptionEnum.HDD) {
+				for(String path: filePathSet) {
+					list.add(path);
+				}
+			} else {
+				for(String path: pathFileMap.keySet()) {
+					list.add(path);
+				}
+			}
+			break;
+			
+		case ID_PATH:
+			for(Integer key: IDToPathMapping.keySet()) {
+				list.add(key.toString() + " : " + IDToPathMapping.get(key));
+			}
+			break;
+		}
+		
+		array = (String[])list.toArray();
+		
+		return array;
+	}
 
 	/**
 	 * A helper method for creating a new file and linking that file to an ID.
@@ -410,6 +504,9 @@ public class FileHosterServer extends UnicastRemoteObject implements
 	 */
 	private String registerFileIDPath(String name) throws IOException {
 		String path = null;
+		if(IDToPathMapping == null) {
+			IDToPathMapping = new HashMap<Integer, String>();
+		}
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(name);
@@ -443,6 +540,8 @@ public class FileHosterServer extends UnicastRemoteObject implements
 			pathFileMap.put(name, outputStream);
 			path = name;
 		}
+		
+		IDToPathMapping.put(idCounter, path);
 		return path;
 	}
 	
