@@ -13,7 +13,12 @@ public class TestClient {
 
 	public static void main(String[] args) {
 		try {
-			Registry registry = LocateRegistry.getRegistry("localhost");
+			System.setProperty("javax.net.ssl.keyStore", "keystore");
+		    System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		    System.setProperty("javax.net.ssl.trustStore", "truststore");
+		    System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+		    
+			Registry registry = LocateRegistry.getRegistry("localhost",5000);
 			IFileHosterServer server = (IFileHosterServer) registry
 					.lookup("FileHosterServer");
 			File testFile = new File("client/test.txt");
