@@ -30,12 +30,12 @@ import transfer.RMIInputStreamImpl;
 import transfer.RMIOutputStream;
 import transfer.RMIOutputStreamImpl;
 
-public class FileHosterServer extends UnicastRemoteObject implements
+public class FileHosterServer implements
 		IFileHosterServer {
 
-	public FileHosterServer(int port) throws RemoteException {
+	/*public FileHosterServer(int port) throws RemoteException {
 		super(port);
-	}
+	}*/
 
 	final public static int BUF_SIZE = 1024 * 64;
 	
@@ -197,8 +197,10 @@ public class FileHosterServer extends UnicastRemoteObject implements
 
 		// Create server object and export it
 		FileHosterServer server;
+		IFileHosterServer stub;
 		try {
-			server = new FileHosterServer(serverPort);
+			server = new FileHosterServer();
+			stub = (IFileHosterServer) UnicastRemoteObject.exportObject(server, registryPort);
 		} catch (RemoteException e) {
 			System.out
 					.println("File hoster could not be exported. Try specifying a different port with the -sp paramter.");
@@ -210,7 +212,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 		// TODO handle external registries
 		try {
 			server.rmiRegistry = LocateRegistry.createRegistry(registryPort);
-			server.rmiRegistry.bind("FileHosterServer", server);
+			server.rmiRegistry.bind("FileHosterServer", stub);
 		} catch (RemoteException e) {
 			System.out
 					.println("Registry could not be created. Try specifying a different port with the -rp parameter.");
@@ -218,7 +220,7 @@ public class FileHosterServer extends UnicastRemoteObject implements
 		} catch (AlreadyBoundException e) {
 			try {
 				server.rmiRegistry.unbind("FileHosterServer");
-				server.rmiRegistry.bind("Server", server);
+				server.rmiRegistry.bind("FileHosterServer", stub);
 			} catch (AccessException e1) {
 				System.out
 						.println("Unknown error. Try restarting the application!");
