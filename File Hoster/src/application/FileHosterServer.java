@@ -1,15 +1,20 @@
 package application;
 
-//#define SSL
+//#define ENCRYPTED_TRANSMISSION
+//#define COMPRESSION
+//#define LOGGING
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.rmi.AccessException;
@@ -27,21 +32,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+//#ifdef COMPRESSION
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipEntry;
+//#endif
+
+//#ifdef ENCRYPTED_TRANSMISSION
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import javax.rmi.ssl.SslRMIServerSocketFactory;
+//#endif
+
 import transfer.RMIInputStream;
 import transfer.RMIInputStreamImpl;
 import transfer.RMIOutputStream;
 import transfer.RMIOutputStreamImpl;
 
-//#ifdef SSL
-import javax.rmi.ssl.SslRMIClientSocketFactory;
-import javax.rmi.ssl.SslRMIServerSocketFactory;
-//#endif
-
 public class FileHosterServer implements IFileHosterServer {
-
-	/*
-	 * public FileHosterServer(int port) throws RemoteException { super(port); }
-	 */
 
 	final public static int BUF_SIZE = 1024 * 64;
 
@@ -206,33 +213,34 @@ public class FileHosterServer implements IFileHosterServer {
 		IFileHosterServer stub;
 		try {
 			server = new FileHosterServer();
-			// #ifdef SSL
+			// #ifdef ENCRYPTED_TRANSMISSION
 			System.setProperty("javax.net.ssl.keyStore", "keystore");
-		    System.setProperty("javax.net.ssl.keyStorePassword", "123456");
-		    System.setProperty("javax.net.ssl.trustStore", "truststore");
-		    System.setProperty("javax.net.ssl.trustStorePassword", "123456");
-		    
+			System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+			System.setProperty("javax.net.ssl.trustStore", "truststore");
+			System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+
 			SslRMIServerSocketFactory sslServerSocketFactory = new SslRMIServerSocketFactory();
 			SslRMIClientSocketFactory sslClientSocketFactory = new SslRMIClientSocketFactory();
 
 			stub = (IFileHosterServer) UnicastRemoteObject.exportObject(server,
 					serverPort, sslClientSocketFactory, sslServerSocketFactory);
-			//#else
-//@			stub = (IFileHosterServer) UnicastRemoteObject.exportObject(server,
-//@					serverPort);
-			//#endif
+			// #else
+			// @ stub = (IFileHosterServer)
+//@			// UnicastRemoteObject.exportObject(server,
+			// @ serverPort);
+			// #endif
 		} catch (RemoteException e) {
 			System.out
 					.println("File hoster could not be exported. Try specifying a different port with the -sp paramter.");
 			return false;
 		}
-		// #ifdef SSL
+		// #ifdef ENCRYPTED_TRANSMISSION
 		catch (IOException e) {
 			System.out
 					.println("File hoster could not be exported. Try specifying a different port with the -sp paramter.");
 			return false;
 		}
-		//#endif
+		// #endif
 
 		// Create registry and add exported server object with key
 		// "FileHosterServer"
@@ -302,6 +310,10 @@ public class FileHosterServer implements IFileHosterServer {
 			container = new OutputIDPathContainer(idCounter++, path);
 			break;
 		}
+		
+		//#ifdef LOGGING
+			logFileCreated(name);
+		//#endif
 
 		return container;
 	}
@@ -311,8 +323,18 @@ public class FileHosterServer implements IFileHosterServer {
 		OutputStream outputStream = null;
 
 		if (saveOption == saveOptionEnum.HDD) {
-			File file = new File(name);
+			File file = null;
+			// #ifdef COMPRESSION
+			file = new File(name);
 			outputStream = new FileOutputStream(file);
+			ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+			String fileName = name.substring(0, name.length() - 4);
+			zipOutputStream.putNextEntry(new ZipEntry(fileName));
+			outputStream = zipOutputStream;
+			// #else
+			// @ file = new File(name);
+			// @ outputStream = new FileOutputStream(file);
+			// #endif
 		} else {
 			outputStream = pathFileMap.get(name);
 		}
@@ -320,6 +342,10 @@ public class FileHosterServer implements IFileHosterServer {
 		outputStream = new RMIOutputStream(
 				new RMIOutputStreamImpl(outputStream));
 
+		//#ifdef LOGGING
+		logOutputStream(name);
+		//#endif
+		
 		return outputStream;
 
 	}
@@ -331,9 +357,20 @@ public class FileHosterServer implements IFileHosterServer {
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(idPathMap.get(ID));
 			outputStream = new FileOutputStream(file);
+			// #ifdef COMPRESSION
+			ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+			String zipName = idPathMap.get(ID);
+			String fileName = zipName.substring(0, zipName.length() - 4);
+			zipOutputStream.putNextEntry(new ZipEntry(fileName));
+			outputStream = zipOutputStream;
+			// #endif
 		} else {
 			outputStream = idFileMap.get(ID);
 		}
+		
+		//#ifdef LOGGING
+		logOutputStream(ID.toString());
+		//#endif
 
 		// Create ouput stream for remote usage
 		outputStream = new RMIOutputStream(
@@ -349,10 +386,21 @@ public class FileHosterServer implements IFileHosterServer {
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(path);
 			inputStream = new FileInputStream(file);
+			// #ifdef COMPRESSION
+			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+
+			// Position inputstream on next (only) entry
+			zipInputStream.getNextEntry();
+			inputStream = zipInputStream;
+			// #endif
 		} else {
 			ByteArrayOutputStream outputStream = pathFileMap.get(path);
 			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 		}
+		
+		//#ifdef LOGGING
+		logInputStream(path);
+		//#endif
 
 		// Create ouput stream for remote usage
 		return new RMIInputStream(new RMIInputStreamImpl(inputStream));
@@ -365,11 +413,21 @@ public class FileHosterServer implements IFileHosterServer {
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(idPathMap.get(id));
 			inputStream = new FileInputStream(file);
+			// #ifdef COMPRESSION
+			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+
+			// Position inputstream on next (only) entry
+			zipInputStream.getNextEntry();
+			inputStream = zipInputStream;
+			// #endif
 		} else {
 			ByteArrayOutputStream outputStream = idFileMap.get(id);
 			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-
 		}
+		
+		//#ifdef LOGGING
+		logInputStream(id.toString());
+		//#endif
 
 		// Create input stream for remote usage
 		return new RMIInputStream(new RMIInputStreamImpl(inputStream));
@@ -394,6 +452,8 @@ public class FileHosterServer implements IFileHosterServer {
 				pathFileMap.remove(path);
 			}
 		}
+		
+		logFileDeleted(id.toString());
 	}
 
 	public void deleteFile(String path) throws IOException {
@@ -407,7 +467,7 @@ public class FileHosterServer implements IFileHosterServer {
 		if (identificationOption == identificationOptionEnum.ID_PATH) {
 			Integer key = null;
 			Set<Entry<Integer, String>> entries = IDToPathMapping.entrySet();
-			for (Entry entry : entries) {
+			for (Entry<Integer, String> entry : entries) {
 				if (entry.getValue().equals(path)) {
 					key = (Integer) entry.getKey();
 					IDToPathMapping.remove(key);
@@ -421,6 +481,8 @@ public class FileHosterServer implements IFileHosterServer {
 				idFileMap.remove(key);
 			}
 		}
+		
+		logFileDeleted(path);
 	}
 
 	public String[] listFiles() {
@@ -475,7 +537,12 @@ public class FileHosterServer implements IFileHosterServer {
 	private void registerFileID(String name) throws IOException {
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
-			File file = new File(name);
+			File file = null;
+			// #ifdef COMPRESSION
+			file = new File(name + ".zip");
+			// #else
+			// @ file = new File(name);
+			// #endif
 			if (idPathMap == null) {
 				idPathMap = new HashMap<Integer, String>();
 			}
@@ -510,7 +577,12 @@ public class FileHosterServer implements IFileHosterServer {
 		String path = null;
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
-			File file = new File(name);
+			File file = null;
+			// #ifdef COMPRESSION
+			file = new File(name + ".zip");
+			// #else
+			// @ file = new File(name);
+			// #endif
 			if (filePathSet == null) {
 				filePathSet = new HashSet<String>();
 			}
@@ -552,7 +624,12 @@ public class FileHosterServer implements IFileHosterServer {
 		}
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
-			File file = new File(name);
+			File file = null;
+			// #ifdef COMPRESSION
+			file = new File(name + ".zip");
+			// #else
+			// @ file = new File(name);
+			// #endif
 			if (filePathSet == null) {
 				filePathSet = new HashSet<String>();
 			}
@@ -608,4 +685,33 @@ public class FileHosterServer implements IFileHosterServer {
 		in.close();
 		out.close();
 	}
+	
+	//#ifdef LOGGING
+	private void logInputStream(String identifier) {
+		appendLog("Input stream retrieved for: " + identifier);
+	}
+	
+	private void logOutputStream(String identifier) {
+		appendLog("Output stream retrieved for: " + identifier);
+	}
+	
+	private void logFileCreated(String name) {
+		appendLog("File created: " + name);
+	}
+	
+	private void logFileDeleted(String name) {
+		appendLog("File deleted: " + name);
+	}
+	
+	private void appendLog(String message)  {
+		new File("log").mkdir();
+		try {
+		    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("log/log.txt", true)));
+		    out.println(message);
+		    out.flush();
+		} catch (IOException e) {
+		    
+		}
+	}
+	//#endif
 }

@@ -81,7 +81,7 @@
 						</description>
 					</feature>
 				</or>
-				<feature abstract="true" name="Logging">
+				<feature name="Logging">
 					<description>
 						Es wird ein Log angelegt, indem alle an Dateien durchgeführten Operationen aufgeführt werden.
 						Falls Benutzerkonten verwendet werden, wird zudem aufgeführt welcher Nutzer diese Operationen durchgeführt hat.
