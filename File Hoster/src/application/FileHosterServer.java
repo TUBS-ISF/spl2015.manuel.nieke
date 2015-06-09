@@ -1,9 +1,5 @@
 package application;
 
-//#define ENCRYPTED_TRANSMISSION
-//#define COMPRESSION
-//#define LOGGING
-
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,28 +21,23 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-//#ifdef COMPRESSION
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import java.util.zip.ZipEntry;
-//#endif
-
-//#ifdef ENCRYPTED_TRANSMISSION
-import javax.rmi.ssl.SslRMIClientSocketFactory;
-import javax.rmi.ssl.SslRMIServerSocketFactory;
-//#endif
 
 import transfer.RMIInputStream;
 import transfer.RMIInputStreamImpl;
 import transfer.RMIOutputStream;
 import transfer.RMIOutputStreamImpl;
+
+import notification.*;
 
 public class FileHosterServer implements IFileHosterServer {
 
@@ -78,6 +69,10 @@ public class FileHosterServer implements IFileHosterServer {
 	Set<String> filePathSet;
 
 	Map<Integer, String> IDToPathMapping;
+	
+	//#ifdef Benachrichtigung
+//@	Map<INotificationListener, List<String>> watchedFiles = new HashMap<INotificationListener, List<String>>();
+	//#endif
 
 	public static void main(String[] args) {
 
@@ -213,33 +208,33 @@ public class FileHosterServer implements IFileHosterServer {
 		IFileHosterServer stub;
 		try {
 			server = new FileHosterServer();
-			// #ifdef ENCRYPTED_TRANSMISSION
-			System.setProperty("javax.net.ssl.keyStore", "keystore");
-			System.setProperty("javax.net.ssl.keyStorePassword", "123456");
-			System.setProperty("javax.net.ssl.trustStore", "truststore");
-			System.setProperty("javax.net.ssl.trustStorePassword", "123456");
-
-			SslRMIServerSocketFactory sslServerSocketFactory = new SslRMIServerSocketFactory();
-			SslRMIClientSocketFactory sslClientSocketFactory = new SslRMIClientSocketFactory();
-
-			stub = (IFileHosterServer) UnicastRemoteObject.exportObject(server,
-					serverPort, sslClientSocketFactory, sslServerSocketFactory);
+			// #ifdef VerschluesselteUebertragung
+//@			System.setProperty("javax.net.ssl.keyStore", "keystore");
+//@			System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+//@			System.setProperty("javax.net.ssl.trustStore", "truststore");
+//@			System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+//@
+//@			SslRMIServerSocketFactory sslServerSocketFactory = new SslRMIServerSocketFactory();
+//@			SslRMIClientSocketFactory sslClientSocketFactory = new SslRMIClientSocketFactory();
+//@
+//@			stub = (IFileHosterServer) UnicastRemoteObject.exportObject(server,
+//@					serverPort, sslClientSocketFactory, sslServerSocketFactory);
 			// #else
-			// @ stub = (IFileHosterServer)
-//@			// UnicastRemoteObject.exportObject(server,
-			// @ serverPort);
+			 stub = (IFileHosterServer)
+			 UnicastRemoteObject.exportObject(server,
+			 serverPort);
 			// #endif
 		} catch (RemoteException e) {
 			System.out
 					.println("File hoster could not be exported. Try specifying a different port with the -sp paramter.");
 			return false;
 		}
-		// #ifdef ENCRYPTED_TRANSMISSION
-		catch (IOException e) {
-			System.out
-					.println("File hoster could not be exported. Try specifying a different port with the -sp paramter.");
-			return false;
-		}
+		// #ifdef VerschluesselteUebertragung
+//@		catch (IOException e) {
+//@			System.out
+//@					.println("File hoster could not be exported. Try specifying a different port with the -sp paramter.");
+//@			return false;
+//@		}
 		// #endif
 
 		// Create registry and add exported server object with key
@@ -311,7 +306,7 @@ public class FileHosterServer implements IFileHosterServer {
 			break;
 		}
 		
-		//#ifdef LOGGING
+		//#ifdef Logging
 			logFileCreated(name);
 		//#endif
 
@@ -324,16 +319,16 @@ public class FileHosterServer implements IFileHosterServer {
 
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = null;
-			// #ifdef COMPRESSION
-			file = new File(name);
-			outputStream = new FileOutputStream(file);
-			ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
-			String fileName = name.substring(0, name.length() - 4);
-			zipOutputStream.putNextEntry(new ZipEntry(fileName));
-			outputStream = zipOutputStream;
+			// #ifdef Komprimierung
+//@			file = new File(name);
+//@			outputStream = new FileOutputStream(file);
+//@			ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+//@			String fileName = name.substring(0, name.length() - 4);
+//@			zipOutputStream.putNextEntry(new ZipEntry(fileName));
+//@			outputStream = zipOutputStream;
 			// #else
-			// @ file = new File(name);
-			// @ outputStream = new FileOutputStream(file);
+			 file = new File(name);
+			 outputStream = new FileOutputStream(file);
 			// #endif
 		} else {
 			outputStream = pathFileMap.get(name);
@@ -342,8 +337,17 @@ public class FileHosterServer implements IFileHosterServer {
 		outputStream = new RMIOutputStream(
 				new RMIOutputStreamImpl(outputStream));
 
-		//#ifdef LOGGING
+		//#ifdef Logging
 		logOutputStream(name);
+		//#endif
+		
+		//#ifdef Benachrichtigung
+//@		for(INotificationListener listener: watchedFiles.keySet()) {
+//@			List<String> files = watchedFiles.get(listener);
+//@			if(files.contains(name)) {
+//@				listener.notify(name, "Output stream retrieved");
+//@			}
+//@		}
 		//#endif
 		
 		return outputStream;
@@ -357,19 +361,28 @@ public class FileHosterServer implements IFileHosterServer {
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(idPathMap.get(ID));
 			outputStream = new FileOutputStream(file);
-			// #ifdef COMPRESSION
-			ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
-			String zipName = idPathMap.get(ID);
-			String fileName = zipName.substring(0, zipName.length() - 4);
-			zipOutputStream.putNextEntry(new ZipEntry(fileName));
-			outputStream = zipOutputStream;
+			// #ifdef Komprimierung
+//@			ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+//@			String zipName = idPathMap.get(ID);
+//@			String fileName = zipName.substring(0, zipName.length() - 4);
+//@			zipOutputStream.putNextEntry(new ZipEntry(fileName));
+//@			outputStream = zipOutputStream;
 			// #endif
 		} else {
 			outputStream = idFileMap.get(ID);
 		}
 		
-		//#ifdef LOGGING
+		//#ifdef Logging
 		logOutputStream(ID.toString());
+		//#endif
+		
+		//#ifdef Benachrichtigung
+//@		for(INotificationListener listener: watchedFiles.keySet()) {
+//@			List<String> files = watchedFiles.get(listener);
+//@			if(files.contains(ID.toString())) {
+//@				listener.notify(ID.toString(), "Output stream retrieved");
+//@			}
+//@		}
 		//#endif
 
 		// Create ouput stream for remote usage
@@ -386,20 +399,29 @@ public class FileHosterServer implements IFileHosterServer {
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(path);
 			inputStream = new FileInputStream(file);
-			// #ifdef COMPRESSION
-			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-
-			// Position inputstream on next (only) entry
-			zipInputStream.getNextEntry();
-			inputStream = zipInputStream;
+			// #ifdef Komprimierung
+//@			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+//@
+//@			// Position inputstream on next (only) entry
+//@			zipInputStream.getNextEntry();
+//@			inputStream = zipInputStream;
 			// #endif
 		} else {
 			ByteArrayOutputStream outputStream = pathFileMap.get(path);
 			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 		}
 		
-		//#ifdef LOGGING
+		//#ifdef Logging
 		logInputStream(path);
+		//#endif
+		
+		//#ifdef Benachrichtigung
+//@		for(INotificationListener listener: watchedFiles.keySet()) {
+//@			List<String> files = watchedFiles.get(listener);
+//@			if(files.contains(path)) {
+//@				listener.notify(path, "Input stream retrieved");
+//@			}
+//@		}
 		//#endif
 
 		// Create ouput stream for remote usage
@@ -413,20 +435,29 @@ public class FileHosterServer implements IFileHosterServer {
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = new File(idPathMap.get(id));
 			inputStream = new FileInputStream(file);
-			// #ifdef COMPRESSION
-			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-
-			// Position inputstream on next (only) entry
-			zipInputStream.getNextEntry();
-			inputStream = zipInputStream;
+			// #ifdef Komprimierung
+//@			ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+//@
+//@			// Position inputstream on next (only) entry
+//@			zipInputStream.getNextEntry();
+//@			inputStream = zipInputStream;
 			// #endif
 		} else {
 			ByteArrayOutputStream outputStream = idFileMap.get(id);
 			inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 		}
 		
-		//#ifdef LOGGING
+		//#ifdef Logging
 		logInputStream(id.toString());
+		//#endif
+		
+		//#ifdef Benachrichtigung
+//@		for(INotificationListener listener: watchedFiles.keySet()) {
+//@			List<String> files = watchedFiles.get(listener);
+//@			if(files.contains(id.toString())) {
+//@				listener.notify(id.toString(), "Input stream retrieved");
+//@			}
+//@		}
 		//#endif
 
 		// Create input stream for remote usage
@@ -453,7 +484,18 @@ public class FileHosterServer implements IFileHosterServer {
 			}
 		}
 		
+		//#ifdef Logging
 		logFileDeleted(id.toString());
+		//#endif
+		
+		//#ifdef Benachrichtigung
+//@		for(INotificationListener listener: watchedFiles.keySet()) {
+//@			List<String> files = watchedFiles.get(listener);
+//@			if(files.contains(id.toString())) {
+//@				listener.notify(id.toString(), "File deleted");
+//@			}
+//@		}
+		//#endif
 	}
 
 	public void deleteFile(String path) throws IOException {
@@ -482,7 +524,18 @@ public class FileHosterServer implements IFileHosterServer {
 			}
 		}
 		
+		//#ifdef Logging
 		logFileDeleted(path);
+		//#endif
+		
+		//#ifdef Benachrichtigung
+//@		for(INotificationListener listener: watchedFiles.keySet()) {
+//@			List<String> files = watchedFiles.get(listener);
+//@			if(files.contains(path)) {
+//@				listener.notify(path, "File deleted");
+//@			}
+//@		}
+		//#endif
 	}
 
 	public String[] listFiles() {
@@ -538,10 +591,10 @@ public class FileHosterServer implements IFileHosterServer {
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = null;
-			// #ifdef COMPRESSION
-			file = new File(name + ".zip");
+			// #ifdef Komprimierung
+//@			file = new File(name + ".zip");
 			// #else
-			// @ file = new File(name);
+			 file = new File(name);
 			// #endif
 			if (idPathMap == null) {
 				idPathMap = new HashMap<Integer, String>();
@@ -578,10 +631,10 @@ public class FileHosterServer implements IFileHosterServer {
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = null;
-			// #ifdef COMPRESSION
-			file = new File(name + ".zip");
+			// #ifdef Komprimierung
+//@			file = new File(name + ".zip");
 			// #else
-			// @ file = new File(name);
+			 file = new File(name);
 			// #endif
 			if (filePathSet == null) {
 				filePathSet = new HashSet<String>();
@@ -625,10 +678,10 @@ public class FileHosterServer implements IFileHosterServer {
 		// If file is written on HDD only the path is remembered
 		if (saveOption == saveOptionEnum.HDD) {
 			File file = null;
-			// #ifdef COMPRESSION
-			file = new File(name + ".zip");
+			// #ifdef Komprimierung
+//@			file = new File(name + ".zip");
 			// #else
-			// @ file = new File(name);
+			 file = new File(name);
 			// #endif
 			if (filePathSet == null) {
 				filePathSet = new HashSet<String>();
@@ -686,7 +739,7 @@ public class FileHosterServer implements IFileHosterServer {
 		out.close();
 	}
 	
-	//#ifdef LOGGING
+	//#ifdef Logging
 	private void logInputStream(String identifier) {
 		appendLog("Input stream retrieved for: " + identifier);
 	}
@@ -707,11 +760,37 @@ public class FileHosterServer implements IFileHosterServer {
 		new File("log").mkdir();
 		try {
 		    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("log/log.txt", true)));
-		    out.println(message);
-		    out.flush();
+		    Date date = new Date();
+		    String timestamp = "[" + date.toString() + "] ";
+		    out.println(timestamp + message);
+		    out.close();
 		} catch (IOException e) {
 		    
 		}
 	}
+	//#endif
+	
+	//#ifdef Benachrichtigung
+//@	public void registerListener(INotificationListener listener, String file) {
+//@		if(!watchedFiles.containsKey(listener)) {
+//@			List<String> files = new ArrayList<String>();
+//@			files.add(file);
+//@			watchedFiles.put(listener, files);
+//@		} else {
+//@			List<String> files = watchedFiles.get(listener);
+//@			files.add(file);
+//@		}
+//@	}
+//@	
+//@	public void registerListener(INotificationListener listener, Integer id) {
+//@		if(!watchedFiles.containsKey(listener)) {
+//@			List<String> files = new ArrayList<String>();
+//@			files.add(id.toString());
+//@			watchedFiles.put(listener, files);
+//@		} else {
+//@			List<String> files = watchedFiles.get(listener);
+//@			files.add(id.toString());
+//@		}
+//@	}
 	//#endif
 }

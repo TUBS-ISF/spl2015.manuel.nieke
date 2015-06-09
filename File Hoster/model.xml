@@ -12,15 +12,17 @@
 					<description>
 						Bestimmt wie die hochgeladenen Dateien abgespeichert werden sollen.
 					</description>
-					<feature mandatory="true" name="InMemory">
+					<feature abstract="true" mandatory="true" name="InMemory">
 						<description>
 							Dateien werden im RAM gehalten, um eine kürzere Zugriffszeit zu ermöglichen.
 							Falls nicht genügend Speicherplatz vorhanden ist, werden die Dateien auf die Festplatte ausgelagert.
+							!IMPLEMENTIERT!
 						</description>
 					</feature>
-					<feature mandatory="true" name="Festplatte">
+					<feature abstract="true" mandatory="true" name="Festplatte">
 						<description>
 							Dateien werden auf einer Festplatte gespeichert.
+							!IMPLEMENTIERT!
 						</description>
 					</feature>
 				</alt>
@@ -62,7 +64,10 @@
 				</or>
 				<feature name="Komprimierung">
 					<description>
-						Wenn dieses Feature aktiviert ist, werden Dateien serverseitig vor dem speichern komprimiert und vor dem abrufen wieder dekomprimiert.
+						Wenn dieses Feature aktiviert ist, werden Dateien serverseitig vor 
+						dem speichern komprimiert und vor dem abrufen wieder
+						 dekomprimiert.
+						!IMPLEMENTIERT!
 					</description>
 				</feature>
 				<or abstract="true" name="Sicherheit">
@@ -71,20 +76,25 @@
 					</description>
 					<feature mandatory="true" name="VerschluesselteUebertragung">
 						<description>
-							Für die Dateiübertragung wird eine verschlüsselte Verbindung genutzt (SSL).
+							Für die Dateiübertragung wird eine verschlüsselte Verbindung
+							 genutzt (SSL).
+							!IMPLEMENTIERT!
 						</description>
 					</feature>
 					<feature abstract="true" mandatory="true" name="VerschluesseltAbspeichern">
 						<description>
-							Ermöglicht es Benutzern einen Öffentlichen Schlüssel bereitzustellen, anhand dessen die Dateien serverseitig verschlüsselt werden.
-							Die entschlüsselung muss jedoch clientseitig geschehen.
+							Die gespeicherten Daten werden Serverseitig ver- und 
+							entschlüsselt.
 						</description>
 					</feature>
 				</or>
 				<feature name="Logging">
 					<description>
-						Es wird ein Log angelegt, indem alle an Dateien durchgeführten Operationen aufgeführt werden.
-						Falls Benutzerkonten verwendet werden, wird zudem aufgeführt welcher Nutzer diese Operationen durchgeführt hat.
+						Es wird ein Log angelegt, indem alle an Dateien durchgeführten 
+						Operationen aufgeführt werden.
+						Falls Benutzerkonten verwendet werden, wird zudem aufgeführt 
+						welcher Nutzer diese Operationen durchgeführt hat.
+						!IMPLEMENTIERT!
 					</description>
 				</feature>
 				<or abstract="true" name="Fehlertoleranz">
@@ -133,17 +143,30 @@
 					<description>
 						Bestimmt wie Dateien gegenüber der Server-Applikation identifiziert werden.
 					</description>
-					<feature mandatory="true" name="ID">
+					<feature abstract="true" mandatory="true" name="ID">
 						<description>
-							Bei dem abspeichern und auflisten von Dateien wird eine eindeutige ID ausgegeben, mithilfe derer die Datei identifiziert werden kann.
+							Bei dem abspeichern und auflisten von Dateien wird eine 
+							eindeutige ID ausgegeben, mithilfe derer die Datei identifiziert 
+							werden kann.
+							!IMPLEMENTIERT!
 						</description>
 					</feature>
-					<feature mandatory="true" name="Dateipfad">
+					<feature abstract="true" mandatory="true" name="Dateipfad">
 						<description>
-							Dateien werden über den Dateipfad und -namen identifiziert. Falls vorhanden sind Benutzerkonten und Gruppen teil des Dateipfades.
+							Dateien werden über den Dateipfad und -namen identifiziert. 
+							Falls vorhanden sind Benutzerkonten und Gruppen teil 
+							des Dateipfades.
+							!IMPLEMENTIERT!
 						</description>
 					</feature>
 				</or>
+				<feature name="Benachrichtigung">
+					<description>
+						Clients können sich registrieren, um über Änderungen an 
+						ausgewählten Dateien benachrichtigt zu werden.
+						!IMPLEMENTIERT!
+					</description>
+				</feature>
 			</and>
 		</struct>
 		<constraints>

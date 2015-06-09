@@ -9,6 +9,9 @@ import java.io.PrintWriter;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import notification.INotificationListener;
+import notification.NotificationListenerImpl;
+
 public class TestClient {
 
 	public static void main(String[] args) {
@@ -18,11 +21,18 @@ public class TestClient {
 		    System.setProperty("javax.net.ssl.trustStore", "truststore");
 		    System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 		    
+		    
+		    
 			Registry registry = LocateRegistry.getRegistry("localhost",5000);
 			IFileHosterServer server = (IFileHosterServer) registry
 					.lookup("FileHosterServer");
 			File testFile = new File("client/test.txt");
 			new File("client").mkdir();
+			
+			//#ifdef Benachrichtigung
+//@			INotificationListener listener = new NotificationListenerImpl(6000);
+//@			server.registerListener(listener, 0);
+			//#endif
 
 			PrintWriter writer = new PrintWriter(testFile, "UTF-8");
 			writer.println("The first line");

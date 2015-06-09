@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import notification.INotificationListener;
+
 public interface IFileHosterServer extends Remote {
 	/**
 	 * This method is called to create a new file on the server. It needs to be called in order to
@@ -67,4 +69,10 @@ public interface IFileHosterServer extends Remote {
 	 * @return an array containing either ids, paths or id/path pairs.
 	 */
 	String[] listFiles() throws RemoteException;
+	
+	//#ifdef Benachrichtigung
+//@	public void registerListener(INotificationListener listener, Integer id) throws RemoteException;
+//@	
+//@	public void registerListener(INotificationListener listener, String file) throws RemoteException;
+	//#endif
 }
