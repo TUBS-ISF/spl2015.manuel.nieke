@@ -67,6 +67,12 @@ public class TestClient {
 			File returnedFile = new File("client/returned.txt");
 			FileHosterServer.copy(inputStream, new FileOutputStream(
 					returnedFile));
+			
+			if (container instanceof OutputPathContainer) {
+				System.out.println(server.commit(((OutputPathContainer)container).path));
+			} else if (container instanceof OutputIDContainer) {
+				System.out.println(server.commit(((OutputIDContainer)container).id));
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();

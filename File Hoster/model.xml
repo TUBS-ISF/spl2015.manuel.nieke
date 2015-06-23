@@ -97,6 +97,14 @@
 						!IMPLEMENTIERT!
 					</description>
 				</feature>
+				<or abstract="true" name="Statistik">
+					<or abstract="true" mandatory="true" name="Speicherverbrauch">
+						<feature mandatory="true" name="RAM"/>
+						<feature mandatory="true" name="HDD"/>
+					</or>
+					<feature mandatory="true" name="Dateizugriffe"/>
+					<feature mandatory="true" name="Dateianzahl"/>
+				</or>
 				<or abstract="true" name="Fehlertoleranz">
 					<description>
 						Optionen um beschädigte Dateien erkennen und tolerieren zu können.
@@ -111,6 +119,20 @@
 								Alle Dateien werden doppelt abgespeichert. Wird eine beschädigte Datei durch Checksummenabgleich erkannt, wird diese durch das Replikat ersetzt.
 							</description>
 						</feature>
+						<alt abstract="true" mandatory="true" name="ChecksummenTyp">
+							<feature mandatory="true" name="Adler32">
+								<description>
+									Fuer die Checksummen wird der Adler32-Algorithmus verwendet.
+									Dieser ist schneller, jedoch weniger verlässlich als CRC32.
+								</description>
+							</feature>
+							<feature mandatory="true" name="CRC32">
+								<description>
+									Fuer die Checksummen wird der CRC32-Algorithmus verwendet.
+									Dieser ist langsamer, aber verlässlicher als Adler32.
+								</description>
+							</feature>
+						</alt>
 					</and>
 					<feature abstract="true" mandatory="true" name="FehlerkorregierenderCode">
 						<description>
@@ -188,6 +210,12 @@
 			<rule>
 				<imp>
 					<var>Komprimierung</var>
+					<var>Festplatte</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>HDD</var>
 					<var>Festplatte</var>
 				</imp>
 			</rule>

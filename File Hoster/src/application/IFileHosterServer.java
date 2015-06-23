@@ -70,6 +70,9 @@ public interface IFileHosterServer extends Remote {
 	 */
 	String[] listFiles() throws RemoteException;
 	
+	boolean commit(Integer id) throws RemoteException;
+	boolean commit(String path) throws RemoteException;
+	
 	//#ifdef Benachrichtigung
 //@	public void registerListener(INotificationListener listener, Integer id) throws RemoteException;
 //@	
