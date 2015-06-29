@@ -2,8 +2,8 @@
 # 0 = deselected, 1 = selected, 2 = undefined
 21FileHoster
 21Speicherart
-22InMemory
-22Festplatte
+12InMemory
+20Festplatte
 22Benutzerkonten
 22Zugriffsbereiche
 22Gruppen
@@ -11,11 +11,17 @@
 22ClientApplikation
 22GUI
 22Kommandozeile
-22Komprimierung
+20Komprimierung
 22Sicherheit
 22VerschluesselteUebertragung
 22VerschluesseltAbspeichern
 22Logging
+22Statistik
+22Speicherverbrauch
+22RAM
+20HDD
+22Dateizugriffe
+22Dateianzahl
 22Fehlertoleranz
 22Checksummen
 22Redundanz

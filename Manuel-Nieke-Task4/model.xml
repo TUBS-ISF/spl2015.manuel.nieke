@@ -98,12 +98,32 @@
 					</description>
 				</feature>
 				<or abstract="true" name="Statistik">
+					<description>
+						Verschiedene Statistiken werden während des Gebrauchs 
+						gespeichert.
+					</description>
 					<or abstract="true" mandatory="true" name="Speicherverbrauch">
-						<feature mandatory="true" name="RAM"/>
-						<feature mandatory="true" name="HDD"/>
+						<feature mandatory="true" name="RAM">
+							<description>
+								Der RAM-Verbrauch der gesamten Applikation wird gespeichert.
+							</description>
+						</feature>
+						<feature mandatory="true" name="HDD">
+							<description>
+								Der Speicherverbrauch auf der Festplatte wird gespeichert.
+							</description>
+						</feature>
 					</or>
-					<feature mandatory="true" name="Dateizugriffe"/>
-					<feature mandatory="true" name="Dateianzahl"/>
+					<feature mandatory="true" name="Dateizugriffe">
+						<description>
+							Die Anzahl der Dateizugriffe wird gespeichert.
+						</description>
+					</feature>
+					<feature mandatory="true" name="Dateianzahl">
+						<description>
+							Die Anzahl der gespeicherten Dateien wird gespeichert.
+						</description>
+					</feature>
 				</or>
 				<or abstract="true" name="Fehlertoleranz">
 					<description>
