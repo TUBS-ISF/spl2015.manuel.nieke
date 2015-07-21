@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	<featureModel chosenLayoutAlgorithm="1">
+		<struct>
+			<and mandatory="true" name="FileHoster">
+				<description>
+					Ziel des Projektes ist es, einen einfachen File Hoster zu implementieren.
+					In erster Linie wird hierfür die Server-Applikation bereitgestellt auf die entfernt zugegriffen werden kann.
+					Die Applikation bietet Grundlegend die Möglichkeiten Dateien abzuspeichern, zu löschen, zu überschreiben, abzurufen sowie eine Liste der Dateien anzuzeigen, auf die zugegriffen werden kann.
+					Mit der Server-Applikation kann entweder über die bereitgestellte API oder die optionalen Client-Applikationen interagiert werden.
+				</description>
+				<alt abstract="true" mandatory="true" name="Speicherart">
+					<description>
+						Bestimmt wie die hochgeladenen Dateien abgespeichert werden sollen.
+					</description>
+					<feature abstract="true" mandatory="true" name="InMemory">
+						<description>
+							Dateien werden im RAM gehalten, um eine kürzere Zugriffszeit zu ermöglichen.
+							Falls nicht genügend Speicherplatz vorhanden ist, werden die Dateien auf die Festplatte ausgelagert.
+							!IMPLEMENTIERT!
+						</description>
+					</feature>
+					<feature abstract="true" mandatory="true" name="Festplatte">
+						<description>
+							Dateien werden auf einer Festplatte gespeichert.
+							!IMPLEMENTIERT!
+						</description>
+					</feature>
+				</alt>
+				<and abstract="true" name="Benutzerkonten">
+					<description>
+						Ermöglicht es Benutzern sich gegenüber dem Server zu identifizieren.
+						Falls dieses Feature ausgewählt ist, ist es nicht möglich ohne Identifikation auf Dateien zuzugreifen.
+					</description>
+					<and abstract="true" name="Zugriffsbereiche">
+						<description>
+							Wenn dieses Feature ausgewählt ist, sind die Dateien die ein Benutzer hochlädt ausschließlich für ihn zugreifbar.
+						</description>
+						<feature abstract="true" name="Gruppen">
+							<description>
+								Ermöglicht es Nutzern Gruppen zu erstellen, in denen Dateien für mehrere Nutzer zugänglich sind.
+							</description>
+						</feature>
+					</and>
+					<feature abstract="true" name="Berechtigungen">
+						<description>
+							Ermöglicht es Operationen die von Benutzern ausgeführt werden können (ggf. für Zugriffsbereiche spezifiziert) zu verwalten.
+						</description>
+					</feature>
+					<feature name="Administratorkonten">
+						<description>
+							Fuegt Administratorkonten hinzu, die auf alle Dateien Zugriff haben.
+						</description>
+					</feature>
+					<and name="DynamischErweiterbar">
+						<description>
+							Ermoeglicht es nach Programmstart Benutzer hinzuzufuegen.
+						</description>
+						<feature name="GruppenErweiterbar">
+							<description>
+								Ermoeglicht es nach dem Programmstart Benutzer zu Gruppen
+								hinzuzufuegen.
+							</description>
+						</feature>
+					</and>
+				</and>
+				<or abstract="true" name="ClientApplikation">
+					<description>
+						Eine bereitgestellte Client-Applikation, die mit der Server-Applikation interagieren kann.
+					</description>
+					<feature abstract="true" mandatory="true" name="GUI">
+						<description>
+							Eine Client-Applikation die eine grafische Oberfläche bereitstellt.
+						</description>
+					</feature>
+					<feature abstract="true" mandatory="true" name="Kommandozeile">
+						<description>
+							Eine Client-Applikation die über die Kommandozeile aufgerufen werden kann.
+						</description>
+					</feature>
+				</or>
+				<feature abstract="true" name="Komprimierung">
+					<description>
+						Wenn dieses Feature aktiviert ist, werden Dateien serverseitig vor 
+						dem speichern komprimiert und vor dem abrufen wieder
+						 dekomprimiert.
+						!IMPLEMENTIERT!
+					</description>
+				</feature>
+				<or abstract="true" name="Sicherheit">
+					<description>
+						Zusätzliche Optionen um eine höhere Sicherheit (Security) zu gewährleisten.
+					</description>
+					<feature abstract="true" mandatory="true" name="VerschluesselteUebertragung">
+						<description>
+							Für die Dateiübertragung wird eine verschlüsselte Verbindung
+							 genutzt (SSL).
+							!IMPLEMENTIERT!
+						</description>
+					</feature>
+					<feature abstract="true" mandatory="true" name="VerschluesseltAbspeichern">
+						<description>
+							Die gespeicherten Daten werden Serverseitig ver- und 
+							entschlüsselt.
+						</description>
+					</feature>
+				</or>
+				<and abstract="true" name="Logging">
+					<description>
+						Es wird ein Log angelegt, indem alle an Dateien durchgeführten 
+						Operationen aufgeführt werden.
+					</description>
+					<feature abstract="true" name="BenutzerLogging">
+						<description>
+							Falls Benutzerkonten verwendet werden, wird beim Logging 
+							aufgefuehrt welcher Nutzer diese Operationen durchgeführt hat.
+						</description>
+					</feature>
+					<feature abstract="true" name="GruppenLogging">
+						<description>
+							Fuehrt beim Logging auf aus welcher Gruppe die Datei entstammt.
+						</description>
+					</feature>
+					<feature abstract="true" name="FehlerLogging">
+						<description>
+							Loggt die Fehler die durch Einsatz des Checksummenvergleichs
+							erkannt werden.
+						</description>
+					</feature>
+					<feature name="Tracing">
+						<description>
+							Adds logging of traces for all method calls.
+						</description>
+					</feature>
+					<feature name="AdminLogging">
+						<description>
+							Adds access by administrators to logging.
+						</description>
+					</feature>
+					<feature name="BenutzerAenderung">
+						<description>
+							Adds logging for when a group or a user is created.
+						</description>
+					</feature>
+				</and>
+				<or abstract="true" name="Statistik">
+					<or abstract="true" mandatory="true" name="Speicherverbrauch">
+						<feature abstract="true" mandatory="true" name="RAM">
+							<description>
+								
+							</description>
+						</feature>
+						<feature abstract="true" mandatory="true" name="HDD"/>
+					</or>
+					<feature abstract="true" mandatory="true" name="Dateizugriffe"/>
+					<feature abstract="true" mandatory="true" name="Dateianzahl"/>
+					<feature abstract="true" mandatory="true" name="Fehlerauftritte"/>
+					<feature mandatory="true" name="FehlerhafteAuthentifizierung">
+						<description>
+							Adds a statistic for the number of failed authentications.
+						</description>
+					</feature>
+					<feature mandatory="true" name="Antwortzeit">
+						<description>
+							Adds a statistic about the average time it takes to 
+							complete a method call.
+						</description>
+					</feature>
+					<feature mandatory="true" name="Benutzeranzahl">
+						<description>
+							Adds a statistic about the total number of users registered.
+						</description>
+					</feature>
+					<feature mandatory="true" name="Gruppengroesse">
+						<description>
+							Add statistics for the number of groups and their average size.
+						</description>
+					</feature>
+				</or>
+				<or abstract="true" name="Fehlertoleranz">
+					<description>
+						Optionen um beschädigte Dateien erkennen und tolerieren zu können.
+					</description>
+					<and abstract="true" mandatory="true" name="Checksummen">
+						<description>
+							Nach dem Anlegen oder Verändern einer Datei wird eine Checksumme dieser erzeugt.
+							Bei dem nächsten Abrufen wird diese mit dem aktuellen Stand der Datei abgeglichen um zu erkennen, ob diese Datei beschädigt ist.
+						</description>
+						<feature abstract="true" name="Redundanz">
+							<description>
+								Alle Dateien werden doppelt abgespeichert. Wird eine beschädigte Datei durch Checksummenabgleich erkannt, wird diese durch das Replikat ersetzt.
+							</description>
+						</feature>
+						<alt abstract="true" mandatory="true" name="ChecksummenTyp">
+							<feature abstract="true" mandatory="true" name="Adler32">
+								<description>
+									Fuer die Checksummen wird der Adler32-Algorithmus verwendet.
+									Dieser ist schneller, jedoch weniger verlässlich als CRC32.
+								</description>
+							</feature>
+							<feature abstract="true" mandatory="true" name="CRC32">
+								<description>
+									Fuer die Checksummen wird der CRC32-Algorithmus verwendet.
+									Dieser ist langsamer, aber verlässlicher als Adler32.
+								</description>
+							</feature>
+						</alt>
+					</and>
+					<feature abstract="true" mandatory="true" name="FehlerkorregierenderCode">
+						<description>
+							Es werden fehlerkorregierende Codes verwendet um (zu einem gewissen Grad) beschädigte Dateien wiederherzustellen.
+							Falls Redundanz ebenfalls ausgewählt ist, wird dies nur durchgeführt, falls das Replikat ebenfalls beschädigt ist.
+						</description>
+					</feature>
+				</or>
+				<or abstract="true" name="Ressourcenbeschraenkung">
+					<description>
+						Ermöglicht es die Ressourcen die verwendet werden zu beschränken.
+					</description>
+					<feature abstract="true" mandatory="true" name="Speicherplatz">
+						<description>
+							Ermöglicht es Benutzern eine Menge an Speicherplatz zuzuweisen, die nicht überschritten werden kann.
+						</description>
+					</feature>
+					<feature abstract="true" mandatory="true" name="Bandbreite">
+						<description>
+							Ermöglicht es die Bandbreite pro Verbindung zu regulieren.
+						</description>
+					</feature>
+					<feature abstract="true" mandatory="true" name="Traffic">
+						<description>
+							Ermöglicht es den verbrauchten Traffic pro Benutzer für einen bestimmten Zeitraum zu regulieren.
+						</description>
+					</feature>
+				</or>
+				<or abstract="true" mandatory="true" name="DateiIdentifikation">
+					<description>
+						Bestimmt wie Dateien gegenüber der Server-Applikation identifiziert werden.
+					</description>
+					<feature abstract="true" mandatory="true" name="ID">
+						<description>
+							Bei dem abspeichern und auflisten von Dateien wird eine 
+							eindeutige ID ausgegeben, mithilfe derer die Datei identifiziert 
+							werden kann.
+							!IMPLEMENTIERT!
+						</description>
+					</feature>
+					<feature abstract="true" mandatory="true" name="Dateipfad">
+						<description>
+							Dateien werden über den Dateipfad und -namen identifiziert. 
+							Falls vorhanden sind Benutzerkonten und Gruppen teil 
+							des Dateipfades.
+							!IMPLEMENTIERT!
+						</description>
+					</feature>
+				</or>
+				<feature abstract="true" name="Benachrichtigung">
+					<description>
+						Clients können sich registrieren, um über Änderungen an 
+						ausgewählten Dateien benachrichtigt zu werden.
+						!IMPLEMENTIERT!
+					</description>
+				</feature>
+			</and>
+		</struct>
+		<constraints>
+			<rule>
+				<imp>
+					<disj>
+						<var>Speicherplatz</var>
+						<var>Traffic</var>
+					</disj>
+					<var>Benutzerkonten</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>VerschluesseltAbspeichern</var>
+					<var>Benutzerkonten</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>Komprimierung</var>
+					<var>Festplatte</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>HDD</var>
+					<var>Festplatte</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>BenutzerLogging</var>
+					<var>Benutzerkonten</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>GruppenLogging</var>
+					<var>Gruppen</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>FehlerLogging</var>
+					<disj>
+						<var>CRC32</var>
+						<var>Adler32</var>
+					</disj>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>Redundanz</var>
+					<var>Festplatte</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>Fehlerauftritte</var>
+					<disj>
+						<var>Adler32</var>
+						<var>CRC32</var>
+					</disj>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>AdminLogging</var>
+					<var>Administratorkonten</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>FehlerhafteAuthentifizierung</var>
+					<var>Benutzerkonten</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>Benutzeranzahl</var>
+					<var>Benutzerkonten</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>GruppenErweiterbar</var>
+					<var>Gruppen</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>Gruppengroesse</var>
+					<var>Gruppen</var>
+				</imp>
+			</rule>
+			<rule>
+				<imp>
+					<var>BenutzerAenderung</var>
+					<var>DynamischErweiterbar</var>
+				</imp>
+			</rule>
+		</constraints>
+		<calculations Auto="true" Constraints="true" Features="true" Redundant="true" Tautology="true"/>
+		<comments/>
+		<featureOrder userDefined="false"/>
+	</featureModel>
